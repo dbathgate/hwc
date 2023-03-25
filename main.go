@@ -1,3 +1,4 @@
+//go:build windows
 // +build windows
 
 package main
@@ -18,6 +19,7 @@ import (
 	cfenv "github.com/cloudfoundry-community/go-cfenv"
 
 	"code.cloudfoundry.org/hwc/contextpath"
+	"code.cloudfoundry.org/hwc/fontloader"
 	"code.cloudfoundry.org/hwc/hwcconfig"
 	"code.cloudfoundry.org/hwc/validator"
 	"code.cloudfoundry.org/hwc/webcore"
@@ -75,6 +77,14 @@ func main() {
 
 	err = validator.ValidateWebConfig(filepath.Join(rootPath, "Web.config"), os.Stderr)
 	checkErr(err)
+
+	if os.Getenv("USER_PROVIDED_FONTS_DIR") != "" {
+		err, fl := fontloater.New()
+		checkErr(err)
+
+		defer syscall.FreeLibrary(fl.FontHandle)
+		checkErr(fl.Load(os.Getenv("USER_PROVIDED_FONTS_DIR")))
+	}
 
 	err, wc := webcore.New()
 	checkErr(err)
